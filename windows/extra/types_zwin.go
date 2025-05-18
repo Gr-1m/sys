@@ -119,19 +119,19 @@ func InitWindowClassEx(cb Callback, hInstance uintptr, lpClassName string) (ex *
 	return
 }
 
-// Privileges
-
-type LUID struct {
-	LowPart  uint32
-	HighPart uint32
-}
-
-type LUIDAndAttributes struct {
-	Luid       LUID
-	Attributes uint32
-}
-
-type TokenPrivilegeS struct {
-	PrivilegeCount uint32
-	Privileges     [1]LUIDAndAttributes
-}
+//// Privileges
+//
+//type LUID struct {
+//	LowPart  uint32
+//	HighPart uint32
+//}
+//
+//type LUIDAndAttributes struct {
+//	Luid       LUID
+//	Attributes uint32
+//}
+//
+//type TokenPrivilegeS struct {
+//	PrivilegeCount uint32
+//	Privileges     [1]LUIDAndAttributes
+//}

@@ -50,12 +50,8 @@ var (
 	procGlobalUnlock         = modkernel32.NewProc("GlobalUnlock")
 	procGlobalMemoryStatusEx = modkernel32.NewProc("GlobalMemoryStatusEx")
 
-	procVirtualAlloc       = modkernel32.NewProc("VirtualAlloc")
 	procVirtualAllocEx     = modkernel32.NewProc("VirtualAllocEx")
 	procVirtualFreeEx      = modkernel32.NewProc("VirtualFreeEx")
-	procVirtualProtect     = modkernel32.NewProc("VirtualProtect")
-	procReadProcessMemory  = modkernel32.NewProc("ReadProcessMemory")
-	procWriteProcessMemory = modkernel32.NewProc("WriteProcessMemory")
 	procRtlCopyMemory      = modkernel32.NewProc("RtlCopyMemory")
 
 	procIsDebuggerPresent          = modkernel32.NewProc("IsDebuggerPresent")
@@ -107,23 +103,11 @@ func GlobalMemoryStatusEx(lpBuffer *MemoryStatusEX) (err error) {
 	return
 }
 
-func VirtualProtect(lpAddress, dwSize uintptr, flNewProtect uint32, lpflOldProtect *uint32) (err error) {
-	r1, _, e1 := syscall.SyscallN(procVirtualProtect.Addr(), lpAddress, dwSize, uintptr(flNewProtect), uintptr(unsafe.Pointer(lpflOldProtect)))
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
+// Use wincall VirtualProtect
+//func VirtualProtect(lpAddress, dwSize uintptr, flNewProtect uint32, lpflOldProtect *uint32) (err error) {}
 
-	return
-}
-
-func VirtualAlloc(lpAddress, dwSize uintptr, flAllocationType, flProtect uint32) (err error) {
-	r1, _, e1 := syscall.SyscallN(procVirtualAlloc.Addr(), lpAddress, dwSize, uintptr(flAllocationType), uintptr(flProtect))
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
-
-	return
-}
+// Use wincall VirtualAlloc
+//func VirtualAlloc(lpAddress, dwSize uintptr, flAllocationType, flProtect uint32) (err error) {}
 
 func VirtualAllocEx(hProcess wincall.Handle, lpAddress uintptr, dwSize *uint32, flAllocationType, flProtect uint32) (r1 uintptr, err error) {
 	r1, _, e1 := syscall.SyscallN(procVirtualAllocEx.Addr(), uintptr(hProcess), lpAddress, uintptr(unsafe.Pointer(dwSize)), uintptr(flAllocationType), uintptr(flProtect))
@@ -143,37 +127,11 @@ func VirtualFreeEx(hProcess wincall.Handle, lpAddress uintptr, dwSize *uint32, d
 	return
 }
 
-func ReadProcessMemory(hProcess wincall.Handle, lpBaseAddr uintptr, lpBuffer *byte, nSize uint32, lpNumberOfBytesRead *uint16) (err error) {
-	//wincall.ReadProcessMemory()
-	r1, _, e1 := syscall.SyscallN(procReadProcessMemory.Addr(),
-		uintptr(hProcess),
-		lpBaseAddr,
-		uintptr(unsafe.Pointer(lpBuffer)),
-		uintptr(nSize),
-		uintptr(unsafe.Pointer(lpNumberOfBytesRead)),
-	)
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
+// Use wincall ReadProcessMemory
+//func ReadProcessMemory(hProcess wincall.Handle, lpBaseAddr uintptr, lpBuffer *byte, nSize uint32, lpNumberOfBytesRead *uint16) (err error) {}
 
-	return
-}
-
-func WriteProcessMemory(hProcess wincall.Handle, lpBaseAddr uintptr, lpBuffer *byte, nSize uint32, lpNumberOfBytesRead *uint16) (err error) {
-	//wincall.WriteProcessMemory()
-	r1, _, e1 := syscall.SyscallN(procWriteProcessMemory.Addr(),
-		uintptr(hProcess),
-		lpBaseAddr,
-		uintptr(unsafe.Pointer(lpBuffer)),
-		uintptr(nSize),
-		uintptr(unsafe.Pointer(lpNumberOfBytesRead)),
-	)
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
-
-	return
-}
+// Use wincall WriteProcessMemory
+//func WriteProcessMemory(hProcess wincall.Handle, lpBaseAddr uintptr, lpBuffer *byte, nSize uint32, lpNumberOfBytesRead *uint16) (err error) {}
 
 func RtlCopyMemory(dst, src uintptr, length uint32) (err error) {
 	r1, _, e1 := syscall.SyscallN(procRtlCopyMemory.Addr(), dst, src, uintptr(length))
@@ -184,24 +142,8 @@ func RtlCopyMemory(dst, src uintptr, length uint32) (err error) {
 	return
 }
 
-func CreateRemoteThread(hProcess wincall.Handle, lpThreadAttributes *wincall.SecurityAttributes, dwStackSize uint32, lpStartAddress wincall.Handle, lpParameter uintptr, dwCreationFlags uint32, lpThreadId *uint32) (tHandle wincall.Handle, err error) {
-	r1, _, e1 := syscall.SyscallN(procWriteProcessMemory.Addr(),
-		uintptr(hProcess),
-		uintptr(unsafe.Pointer(lpThreadAttributes)),
-		uintptr(dwStackSize),
-		uintptr(lpStartAddress),
-		uintptr(dwCreationFlags),
-		lpParameter,
-		uintptr(unsafe.Pointer(lpThreadId)),
-	)
-	if r1 == 0 {
-		err = errnoErr(e1)
-	} else {
-		tHandle = wincall.Handle(r1)
-	}
-
-	return
-}
+// Use wincall WriteProcessMemory
+//func WriteProcessMemory(hProcess wincall.Handle, lpThreadAttributes *wincall.SecurityAttributes, dwStackSize uint32, lpStartAddress wincall.Handle, lpParameter uintptr, dwCreationFlags uint32, lpThreadId *uint32) (tHandle wincall.Handle, err error) {}
 
 func IsDebuggerPresent() bool {
 	r1, _, e1 := syscall.SyscallN(procIsDebuggerPresent.Addr())

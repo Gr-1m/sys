@@ -76,23 +76,11 @@ var (
 	procRegSetValueEx  = modadvapi32.NewProc("RegSetValueExW")
 
 	// Service API
-	procOpenSCManager              = modadvapi32.NewProc("OpenSCManagerW")
-	procCreateService              = modadvapi32.NewProc("CreateServiceW")
-	procOpenService                = modadvapi32.NewProc("OpenServiceW")
-	procStartService               = modadvapi32.NewProc("StartServiceW")
-	procControlService             = modadvapi32.NewProc("ControlService")
 	procControlServiceEx           = modadvapi32.NewProc("ControlServiceExW")
 	procDeleteService              = modadvapi32.NewProc("DeleteServiceW")
-	procRegisterServiceCtrlHandler = modadvapi32.NewProc("RegisterServiceCtrlHandlerW")
-	procStartServiceCtrlDispatcher = modadvapi32.NewProc("StartServiceCtrlDispatcherW")
-	procSetServiceStatus           = modadvapi32.NewProc("SetServiceStatus")
-	procCloseServiceHandle         = modadvapi32.NewProc("CloseServiceHandle")
 
 	//
 	procLogonUser               = modadvapi32.NewProc("LogonUserW")
-	procDuplicateTokenEx        = modadvapi32.NewProc("DuplicateTokenEx")
-	procLookupPrivilegeValue    = modadvapi32.NewProc("LookupPrivilegeValueW")
-	procAdjustTokenPrivileges   = modadvapi32.NewProc("AdjustTokenPrivileges")
 	procCreateProcessWithToken  = modadvapi32.NewProc("CreateProcessWithTokenW")
 	procImpersonateLoggedOnUser = modadvapi32.NewProc("ImpersonateLoggedOnUser")
 )
@@ -114,20 +102,20 @@ func LogonUser(lpszUsername, lpszDomain, lpszPassword string, dwLogonType, dwLog
 }
 
 func DuplicateTokenEx(hExistingToken wincall.Token, dwDesireAccess uint32, lpTokenAttr *wincall.SecurityAttributes, impersonationLevel, tokenType uint32, phNewToken *wincall.Token) (err error) {
-	// return wincall.DuplicateTokenEx()
-	r1, _, e1 := syscall.SyscallN(procDuplicateTokenEx.Addr(),
-		uintptr(hExistingToken),
-		uintptr(dwDesireAccess),
-		uintptr(unsafe.Pointer(lpTokenAttr)),
-		uintptr(impersonationLevel),
-		uintptr(tokenType),
-		uintptr(unsafe.Pointer(phNewToken)),
-	)
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
-
-	return
+	return wincall.DuplicateTokenEx(hExistingToken,dwDesireAccess,lpTokenAttr,impersonationLevel,tokenType,phNewToken)
+	//r1, _, e1 := syscall.SyscallN(procDuplicateTokenEx.Addr(),
+	//	uintptr(hExistingToken),
+	//	uintptr(dwDesireAccess),
+	//	uintptr(unsafe.Pointer(lpTokenAttr)),
+	//	uintptr(impersonationLevel),
+	//	uintptr(tokenType),
+	//	uintptr(unsafe.Pointer(phNewToken)),
+	//)
+	//if r1 == 0 {
+	//	err = errnoErr(e1)
+	//}
+	//
+	//return
 }
 
 func RegCreateKeyEx(hKey wincall.Handle, lpSubKey *uint16, Reserved DWORD, lpClass LPCWSTR, dwOptions, samDesired DWORD, lpSecurityAttr *wincall.SecurityAttributes, phkResult *wincall.Handle, lpdwDisposition *DWORD) (err error) {
@@ -152,7 +140,6 @@ func RegCreateKeyEx(hKey wincall.Handle, lpSubKey *uint16, Reserved DWORD, lpCla
 // RegCloseKey = syscall.RegCloseKey
 // TODO:
 func RegEnumValue(hKey wincall.Handle, dwIndex uint32, lpValueName *uint16, lpcchValueName, lpReserved, dwType *uint32, lpData LPBYTE, lpcbData *uint32) (err error) {
-
 	r1, _, e1 := syscall.SyscallN(procRegEnumValueEx.Addr(),
 		uintptr(hKey),
 		uintptr(dwIndex),
@@ -185,77 +172,73 @@ func RegSetValueEx(hKey wincall.Handle, lpValueName LPCWSTR, Reserved, dwType DW
 }
 
 func OpenSCManager(lpMachineName, lpDatabaseName *uint16, dwDesiredAccess uint32) (handle wincall.Handle, err error) {
-	// return wincall.OpenSCManager(lpMachineName, lpDatabaseName, dwDesiredAccess)
-	r1, _, e1 := syscall.SyscallN(procOpenSCManager.Addr(), uintptr(unsafe.Pointer(lpMachineName)), uintptr(unsafe.Pointer(lpDatabaseName)), uintptr(dwDesiredAccess))
-	if r1 == 0 {
-		err = errnoErr(e1)
-	} else {
-		handle = wincall.Handle(r1)
-	}
-
-	return
+	return wincall.OpenSCManager(lpMachineName, lpDatabaseName, dwDesiredAccess)
+	//r1, _, e1 := syscall.SyscallN(procOpenSCManager.Addr(), uintptr(unsafe.Pointer(lpMachineName)), uintptr(unsafe.Pointer(lpDatabaseName)), uintptr(dwDesiredAccess))
+	//if r1 == 0 {
+	//	err = errnoErr(e1)
+	//} else {
+	//	handle = wincall.Handle(r1)
+	//}
+	//
+	//return
 }
 
-func CreateService(hSCManager wincall.Handle, lpServiceName, lpDisplayName *uint16, dwDesiredAccess, dwServiceType, dwStartType, dwErrorControl uint32,
-	lpBinaryPathName, lpLoadOrderGroup, lpdwTagId, lpDependencies, lpServiceStartName, lpPassword *uint16) (handle wincall.Handle, err error) {
-	// wincall.CreateService()
-	r1, _, e1 := syscall.SyscallN(procCreateService.Addr(),
-		uintptr(hSCManager),
-		uintptr(unsafe.Pointer(lpServiceName)),
-		uintptr(unsafe.Pointer(lpDisplayName)),
-		uintptr(dwDesiredAccess),
-		uintptr(dwServiceType),
-		uintptr(dwStartType),
-		uintptr(dwErrorControl),
-		uintptr(unsafe.Pointer(lpBinaryPathName)),
-		uintptr(unsafe.Pointer(lpLoadOrderGroup)),
-		uintptr(unsafe.Pointer(lpdwTagId)),
-		uintptr(unsafe.Pointer(lpDependencies)),
-		uintptr(unsafe.Pointer(lpServiceStartName)),
-		uintptr(unsafe.Pointer(lpPassword)),
-	)
-	if r1 == 0 {
-		err = errnoErr(e1)
-	} else {
-		handle = wincall.Handle(r1)
-	}
+// Use wincall CreateService
+//func CreateService(hSCManager wincall.Handle, lpServiceName, lpDisplayName *uint16, dwDesiredAccess, dwServiceType, dwStartType, dwErrorControl uint32,
+//	lpBinaryPathName, lpLoadOrderGroup, lpdwTagId, lpDependencies, lpServiceStartName, lpPassword *uint16) (handle wincall.Handle, err error) {
+//	// wincall.CreateService()
+//	r1, _, e1 := syscall.SyscallN(procCreateService.Addr(),
+//		uintptr(hSCManager),
+//		uintptr(unsafe.Pointer(lpServiceName)),
+//		uintptr(unsafe.Pointer(lpDisplayName)),
+//		uintptr(dwDesiredAccess),
+//		uintptr(dwServiceType),
+//		uintptr(dwStartType),
+//		uintptr(dwErrorControl),
+//		uintptr(unsafe.Pointer(lpBinaryPathName)),
+//		uintptr(unsafe.Pointer(lpLoadOrderGroup)),
+//		uintptr(unsafe.Pointer(lpdwTagId)),
+//		uintptr(unsafe.Pointer(lpDependencies)),
+//		uintptr(unsafe.Pointer(lpServiceStartName)),
+//		uintptr(unsafe.Pointer(lpPassword)),
+//	)
+//	if r1 == 0 {
+//		err = errnoErr(e1)
+//	} else {
+//		handle = wincall.Handle(r1)
+//	}
+//
+//	return
+//}
 
-	return
-}
-
+// Use wincall OpenService
 func OpenService(hSCManager wincall.Handle, lpServiceName *uint16, dwDesiredAccess uint32) (handle wincall.Handle, err error) {
-	//wincall.OpenService()
-	r1, _, e1 := syscall.SyscallN(procOpenService.Addr(), uintptr(hSCManager), uintptr(unsafe.Pointer(lpServiceName)), uintptr(dwDesiredAccess))
-	if r1 == 0 {
-		err = errnoErr(e1)
-	} else {
-		handle = wincall.Handle(r1)
-	}
-
-	return
+	return wincall.OpenService(hSCManager,lpServiceName,dwDesiredAccess)
+	//r1, _, e1 := syscall.SyscallN(procOpenService.Addr(), uintptr(hSCManager), uintptr(unsafe.Pointer(lpServiceName)), uintptr(dwDesiredAccess))
+	//if r1 == 0 {
+	//	err = errnoErr(e1)
+	//} else {
+	//	handle = wincall.Handle(r1)
+	//}
+	//
+	//return
 }
 
-func StartService(hService wincall.Handle, dwNumServiceArgs uint32, lpServiceArgVectors *int16) (err error) {
-	//wincall.StartService()
-	r1, _, e1 := syscall.SyscallN(procStartService.Addr(), uintptr(hService), uintptr(dwNumServiceArgs), uintptr(unsafe.Pointer(lpServiceArgVectors)))
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
+// Use wincall StartService
+//func StartService(hService wincall.Handle, dwNumServiceArgs uint32, lpServiceArgVectors *int16) (err error) {}
 
-	return
+// Use wincall ControlService
+func ControlService(hService wincall.Handle, dwControl uint32, pControlParam *wincall.SERVICE_STATUS) (err error) {
+	return wincall.ControlService(hService,dwControl,pControlParam)
+	//r1, _, e1 := syscall.SyscallN(procControlService.Addr(), uintptr(hService), uintptr(dwControl), uintptr(unsafe.Pointer(pControlParam)))
+	//if r1 == 0 {
+	//	err = errnoErr(e1)
+	//}
+	//
+	//return
 }
 
-func ControlService(hService wincall.Handle, dwControl uint32, pControlParam *ServiceStatus) (err error) {
-	//wincall.ControlService()
-	r1, _, e1 := syscall.SyscallN(procControlService.Addr(), uintptr(hService), uintptr(dwControl), uintptr(unsafe.Pointer(pControlParam)))
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
-
-	return
-}
-
-func ControlServiceEx(hService wincall.Handle, dwControl, dwInfoLevel uint32, pControlParam *ServiceStatus) (err error) {
+func ControlServiceEx(hService wincall.Handle, dwControl, dwInfoLevel uint32, pControlParam *wincall.SERVICE_STATUS) (err error) {
 	r1, _, e1 := syscall.SyscallN(procControlServiceEx.Addr(), uintptr(hService), uintptr(dwControl), uintptr(dwInfoLevel), uintptr(unsafe.Pointer(pControlParam)))
 	if r1 == 0 {
 		err = errnoErr(e1)
@@ -273,75 +256,23 @@ func DeleteService(hService wincall.Handle) (err error) {
 
 	return
 }
+// Use wincall RegisterServiceCtrlHandler
+//func RegisterServiceCtrlHandler(lpServiceName *uint16, lpHandlerProc uintptr) (r1 uintptr, err error) {}
 
-func RegisterServiceCtrlHandler(lpServiceName *uint16, lpHandlerProc uintptr) (r1 uintptr, err error) {
-	// return wincall.RegisterServiceCtrlHandlerEx()
-	r1, _, e1 := syscall.SyscallN(procRegisterServiceCtrlHandler.Addr(), uintptr(unsafe.Pointer(lpServiceName)), lpHandlerProc)
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
+// Use wincall SetServiceStatus
+//func SetServiceStatus(hServiceStatus wincall.Handle, lpServiceStatus *ServiceStatus) (err error) {}
 
-	return
-}
+// Use wincall StartServiceCtrlDispatcher
+//func StartServiceCtrlDispatcher(serviceTable []ServiceTableEntry) (err error) {}
 
-func SetServiceStatus(hServiceStatus wincall.Handle, lpServiceStatus *ServiceStatus) (err error) {
-	// return wincall.SetServiceStatus(hServiceStatus, lpServiceStatus)
-	r1, _, e1 := syscall.SyscallN(procSetServiceStatus.Addr(), uintptr(hServiceStatus), uintptr(unsafe.Pointer(lpServiceStatus)))
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
+// Use wincall CloseServiceHandle
+//func CloseServiceHandle(hSCObject wincall.Handle) (err error) {}
 
-	return
-}
+// Use wincall LookupPrivilegeValue
+//func LookupPrivilegeValue(lpSystemName, lpName *uint16, lpLuid *wincall.LUID) (err error) {}
 
-func StartServiceCtrlDispatcher(serviceTable []ServiceTableEntry) (err error) {
-	// return wincall.StartServiceCtrlDispatcher(serviceTable)
-	r1, _, e1 := syscall.SyscallN(procStartServiceCtrlDispatcher.Addr(), uintptr(unsafe.Pointer(&serviceTable[0])))
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
-
-	return
-}
-
-func CloseServiceHandle(hSCObject wincall.Handle) (err error) {
-	// return wincall.CloseServiceHandle(hSCObject)
-	r1, _, e1 := syscall.SyscallN(procCloseServiceHandle.Addr(), uintptr(hSCObject))
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
-
-	return
-}
-
-func LookupPrivilegeValue(lpSystemName, lpName *uint16, lpLuid *LUID) (err error) {
-	r1, _, e1 := syscall.SyscallN(procLookupPrivilegeValue.Addr(), uintptr(unsafe.Pointer(lpSystemName)), uintptr(unsafe.Pointer(lpName)), uintptr(unsafe.Pointer(lpLuid)))
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
-
-	return
-}
-
-func AdjustTokenPrivileges(TokenHandle wincall.Token, DisableAllPrivileges bool, NewState *TokenPrivilegeS, BufferLength uint32, PreviousState *TokenPrivilegeS, ReturnLength *uint32) (err error) {
-	var _p0 uint32 = 0
-	if DisableAllPrivileges {
-		_p0 = 1
-	}
-	r1, _, e1 := syscall.SyscallN(procAdjustTokenPrivileges.Addr(),
-		uintptr(TokenHandle),
-		uintptr(_p0),
-		uintptr(unsafe.Pointer(NewState)),
-		uintptr(BufferLength),
-		uintptr(unsafe.Pointer(PreviousState)),
-		uintptr(unsafe.Pointer(ReturnLength)),
-	)
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
-
-	return
-}
+// Use wincall AdjustTokenPrivileges
+//func AdjustTokenPrivileges(TokenHandle wincall.Token, DisableAllPrivileges bool, NewState *TokenPrivilegeS, BufferLength uint32, PreviousState *TokenPrivilegeS, ReturnLength *uint32) (err error) {}
 
 func CreateProcessWithToken(token wincall.Token, dwLogonFlags uint32, appName *uint16, commandLine *uint16, creationFlags uint32, env *uint16, currentDir *uint16, startupInfo *wincall.StartupInfo, outProcInfo *wincall.ProcessInformation) (err error) {
 	r1, _, e1 := syscall.SyscallN(procCreateProcessWithToken.Addr(),
