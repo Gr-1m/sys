@@ -1,7 +1,7 @@
 package extra
 
 import (
-	wincall "golang.org/x/sys/windows"
+	wincall "github.com/Gr-1m/sys/windows"
 	"syscall"
 	"unsafe"
 )
@@ -53,6 +53,7 @@ var (
 	procVirtualAllocEx     = modkernel32.NewProc("VirtualAllocEx")
 	procVirtualFreeEx      = modkernel32.NewProc("VirtualFreeEx")
 	procRtlCopyMemory      = modkernel32.NewProc("RtlCopyMemory")
+	procCreateRemoteThread = modkernel32.NewProc("CreateRemoteThread")
 
 	procIsDebuggerPresent          = modkernel32.NewProc("IsDebuggerPresent")
 	procCheckRemoteDebuggerPresent = modkernel32.NewProc("CheckRemoteDebuggerPresent")
@@ -107,10 +108,12 @@ func GlobalMemoryStatusEx(lpBuffer *MemoryStatusEX) (err error) {
 //func VirtualProtect(lpAddress, dwSize uintptr, flNewProtect uint32, lpflOldProtect *uint32) (err error) {}
 
 // Use wincall VirtualAlloc
-//func VirtualAlloc(lpAddress, dwSize uintptr, flAllocationType, flProtect uint32) (err error) {}
+func VirtualAlloc(lpAddress, dwSize uintptr, flAllocationType, flProtect uint32) (value uintptr,err error) {
+	return wincall.VirtualAlloc(lpAddress,dwSize,flAllocationType,flProtect)
+}
 
-func VirtualAllocEx(hProcess wincall.Handle, lpAddress uintptr, dwSize *uint32, flAllocationType, flProtect uint32) (r1 uintptr, err error) {
-	r1, _, e1 := syscall.SyscallN(procVirtualAllocEx.Addr(), uintptr(hProcess), lpAddress, uintptr(unsafe.Pointer(dwSize)), uintptr(flAllocationType), uintptr(flProtect))
+func VirtualAllocEx(hProcess wincall.Handle, lpAddress , dwSize uintptr, flAllocationType, flProtect uint32) (r1 uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(procVirtualAllocEx.Addr(), uintptr(hProcess), lpAddress, dwSize, uintptr(flAllocationType), uintptr(flProtect))
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
@@ -118,8 +121,8 @@ func VirtualAllocEx(hProcess wincall.Handle, lpAddress uintptr, dwSize *uint32, 
 	return
 }
 
-func VirtualFreeEx(hProcess wincall.Handle, lpAddress uintptr, dwSize *uint32, dwFreeType uint32) (err error) {
-	r1, _, e1 := syscall.SyscallN(procVirtualFreeEx.Addr(), uintptr(hProcess), lpAddress, uintptr(unsafe.Pointer(dwSize)), uintptr(dwFreeType))
+func VirtualFreeEx(hProcess wincall.Handle,  lpAddress , dwSize uintptr, dwFreeType uint32) (err error) {
+	r1, _, e1 := syscall.SyscallN(procVirtualFreeEx.Addr(), uintptr(hProcess), lpAddress, dwSize, uintptr(dwFreeType))
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
@@ -139,6 +142,15 @@ func RtlCopyMemory(dst, src uintptr, length uint32) (err error) {
 		err = errnoErr(e1)
 	}
 
+	return
+}
+
+// TODO: lpStartAddress LPTHREAD_START_ROUTINE
+func CreateRemoteThread(hProcess wincall.Handle, lpThreadAttributes *wincall.SecurityAttributes, dwStackSize , lpStartAddress uintptr, lpParameter uintptr,dwCreationFlags uint32, lpThreadId *uint32)(r1 uintptr,err error){
+	r1,_,e1:= syscall.SyscallN(procCreateRemoteThread.Addr(),uintptr(hProcess), uintptr(unsafe.Pointer(lpThreadAttributes)), dwStackSize, lpStartAddress, lpParameter, uintptr(dwCreationFlags), uintptr(unsafe.Pointer(lpThreadId)))
+	if r1 == 0 {
+		err = errnoErr(e1)
+	}
 	return
 }
 

@@ -2,7 +2,7 @@ package extra
 
 import (
 	"errors"
-	wincall "golang.org/x/sys/windows"
+	wincall "github.com/Gr-1m/sys/windows"
 	"log"
 	"path/filepath"
 	"unicode/utf16"

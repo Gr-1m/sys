@@ -3,7 +3,7 @@ package extra
 import (
 	"github.com/Gr-1m/sys/windows/extra/sysdll"
 	"fmt"
-	wincall "golang.org/x/sys/windows"
+	wincall "github.com/Gr-1m/sys/windows"
 	"syscall"
 	"unsafe"
 )

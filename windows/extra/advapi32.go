@@ -1,7 +1,7 @@
 package extra
 
 import (
-	wincall "golang.org/x/sys/windows"
+	wincall "github.com/Gr-1m/sys/windows"
 	"syscall"
 	"unsafe"
 )
