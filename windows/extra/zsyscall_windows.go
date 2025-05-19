@@ -39,6 +39,7 @@ func errnoErr(e wincall.Errno) error {
 var (
 	//libgdi32    = syscall.NewLazyDLL(sysdll.Add("gdi32.dll")) // GDI(Graphic Device APInterface)
 	modwinhttp  = wincall.NewLazyDLL(sysdll.Add("winhttp.dll"))
+	modntdll = wincall.NewLazyDLL(sysdll.Add("ntdll.dll"))
 	moduser32   = wincall.NewLazyDLL(sysdll.Add("user32.dll")) // User Menu
 	modadvapi32 = wincall.NewLazyDLL(sysdll.Add("advapi32.dll"))
 	modkernel32 = wincall.NewLazyDLL(sysdll.Add("kernel32.dll"))
